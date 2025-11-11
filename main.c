@@ -4,11 +4,6 @@
 #include <SDL2/SDL_ttf.h>
 #include "utils.h"
 
-TTF_Init();
-
-//initialising the font
-TTF_Font* font = TTF_OpenFont("fonts/font.ttf",24);
-
 //defining variables here
 int mouse_x , mouse_y;
 
@@ -17,9 +12,27 @@ void SetColor(SDL_Renderer* r, SDL_Color c){
     SDL_SetRenderDrawColor(r,c.r,c.g,c.b,c.a);
 }
 
+void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]){
+    //makes surface and texture
+    SDL_Surface* surface = TTF_RenderText_Solid(font,text,BLACK);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(r,surface);
+    //frees the surface
+    SDL_FreeSurface(surface);
+    //checks size of text
+    int textWidth , textHeight;
+    TTF_SizeText(font,text, &textWidth, &textHeight);
+    //draws the text
+    SDL_Rect dest = {dim[0],dim[1],textWidth,textHeight};
+    SDL_RenderCopy(r,texture,NULL,&dest);
+
+}
+
 int main(){
     SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
 
+    //initialising the font 
+    TTF_Font* font = TTF_OpenFont("fonts/upheavtt.ttf",24);
 
     //initiate window
     SDL_Window* window = SDL_CreateWindow(
@@ -35,9 +48,11 @@ int main(){
     int running = 1;
     SDL_Event event;
 
-    //crates elements
+    //defining objects locations
     SDL_Rect object = {100,100,100,100};
     SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
+    int addCubeLabel[2] = {25,SCREENHEIGHT-76};
+    SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,115,30};
 
 
     //main loop of window
@@ -54,7 +69,6 @@ int main(){
             object.y = mouse_y;
         }
 
-        
         //start drawing area
         SetColor(renderer, GRAY);
         SDL_RenderClear(renderer);
@@ -66,6 +80,11 @@ int main(){
         SetColor(renderer, DARKGRAY);
         SDL_RenderFillRect(renderer,&bottomBar);
 
+        //writing text
+        SetColor(renderer,GRAY);
+        SDL_RenderFillRect(renderer,&addCubeButton);
+        MakeText(renderer,font,"Add cube",addCubeLabel);
+        
         //updates the display
         SDL_RenderPresent(renderer);
     }
@@ -75,7 +94,7 @@ int main(){
     // when ending program
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-    TTF_CLoseFont(font);
+    TTF_CloseFont(font);
     SDL_Quit();
     return 0;
 }
