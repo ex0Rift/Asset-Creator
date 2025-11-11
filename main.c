@@ -1,4 +1,4 @@
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -7,6 +7,10 @@
 //defining variables here
 int mouse_x , mouse_y;
 int click;
+int mode = 0;
+
+int cubesN = 0;
+SDL_Rect* cubes;
 
 //this function just makes it easier to change the colour by letting me use my own from utils.h
 void SetColor(SDL_Renderer* r, SDL_Color c){
@@ -41,9 +45,14 @@ int Button(SDL_Rect r){
     return 0;
 }
 
+
+
 int main(){
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
+
+    //initialise the cube array
+    cubes = malloc(cubesN * sizeof(SDL_Rect));
 
     //initialising the font 
     TTF_Font* font = TTF_OpenFont("fonts/upheavtt.ttf",24);
@@ -77,6 +86,11 @@ int main(){
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT){
                 click = 1;
             }
+            if (event.type == SDL_KEYDOWN){
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    mode = 0;
+                }
+            }
         }
         
         //gets mouse pos and updates them
@@ -88,12 +102,19 @@ int main(){
         SetColor(renderer, GRAY);
         SDL_RenderClear(renderer);
 
+        //draw cubes to screen
+        SetColor(renderer,BLUE);
+        for (int i =0; i < cubesN; i++){
+            SDL_RenderFillRect(renderer,&cubes[i]);
+        }
+
         //draw the bottom bar
         SetColor(renderer, DARKGRAY);
         SDL_RenderFillRect(renderer,&bottomBar);
 
         //writing text
         SetColor(renderer,GRAY);
+        if (mode==1){SetColor(renderer,MIDGRAY);}
         SDL_RenderFillRect(renderer,&addCubeButton);
         MakeText(renderer,font,"Add cube",addCubeLabel);
 
@@ -101,7 +122,20 @@ int main(){
 
         //add cube button
         int cubeButton = Button(addCubeButton);
-        if (cubeButton == 1){printf("WElll dne\n");}
+        if (cubeButton == 1){mode = 1;}
+        
+
+        //making objects logic
+        if (mouse_y < (SCREENHEIGHT-100)){
+            if (click == 1) {
+                if (mode == 1) {
+                    cubesN += 1;
+                cubes = realloc(cubes, cubesN * sizeof(SDL_Rect));
+                cubes[cubesN-1] = (SDL_Rect) {mouse_x,mouse_y,50,50};
+                }
+            }
+        }
+
 
         
         //updates the display
@@ -111,9 +145,11 @@ int main(){
 
 
     // when ending program
+    free(cubes);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_CloseFont(font);
     SDL_Quit();
+    
     return 0;
 }
