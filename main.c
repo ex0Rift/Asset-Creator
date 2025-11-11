@@ -6,6 +6,7 @@
 
 //defining variables here
 int mouse_x , mouse_y;
+int click;
 
 //this function just makes it easier to change the colour by letting me use my own from utils.h
 void SetColor(SDL_Renderer* r, SDL_Color c){
@@ -24,7 +25,20 @@ void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]){
     //draws the text
     SDL_Rect dest = {dim[0],dim[1],textWidth,textHeight};
     SDL_RenderCopy(r,texture,NULL,&dest);
+}
 
+int Button(SDL_Rect r){
+    //checks if mouse pos is in the button
+    if (
+        r.x < mouse_x && 
+        mouse_x < r.x+r.w && 
+        r.y < mouse_y && 
+        mouse_y < r.y+r.h
+    ){
+        //checks if left click is pressed
+        if (click == 1){return 1;}
+     }
+    return 0;
 }
 
 int main(){
@@ -49,7 +63,6 @@ int main(){
     SDL_Event event;
 
     //defining objects locations
-    SDL_Rect object = {100,100,100,100};
     SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
     int addCubeLabel[2] = {25,SCREENHEIGHT-76};
     SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,115,30};
@@ -57,24 +70,23 @@ int main(){
 
     //main loop of window
     while (running){
+        click = 0;//set clikc to zero at the start of each loop
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {running = 0;}
+
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT){
+                click = 1;
+            }
         }
         
         //gets mouse pos and updates them
         Uint32 buttons = SDL_GetMouseState(&mouse_x,&mouse_y);
 
-        if (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)){
-            object.x = mouse_x;
-            object.y = mouse_y;
-        }
-
+        //
         //start drawing area
+        //
         SetColor(renderer, GRAY);
         SDL_RenderClear(renderer);
-
-        SetColor(renderer,BLACK);
-        SDL_RenderFillRect(renderer,&object);
 
         //draw the bottom bar
         SetColor(renderer, DARKGRAY);
@@ -84,6 +96,13 @@ int main(){
         SetColor(renderer,GRAY);
         SDL_RenderFillRect(renderer,&addCubeButton);
         MakeText(renderer,font,"Add cube",addCubeLabel);
+
+        //checking for button presses
+
+        //add cube button
+        int cubeButton = Button(addCubeButton);
+        if (cubeButton == 1){printf("WElll dne\n");}
+
         
         //updates the display
         SDL_RenderPresent(renderer);
