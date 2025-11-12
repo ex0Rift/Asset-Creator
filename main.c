@@ -6,11 +6,16 @@
 
 //defining variables here
 int mouse_x , mouse_y;
+int first_x , first_y;
 int click;
 int mode = 0;
+int holding = 0;
+SDL_Color drawColour;
+
 
 int cubesN = 0;
 SDL_Rect* cubes;
+SDL_Color* cubeColours;
 
 //this function just makes it easier to change the colour by letting me use my own from utils.h
 void SetColor(SDL_Renderer* r, SDL_Color c){
@@ -53,6 +58,7 @@ int main(){
 
     //initialise the cube array
     cubes = malloc(cubesN * sizeof(SDL_Rect));
+    cubeColours = malloc(cubesN * sizeof(SDL_Color));
 
     //initialising the font 
     TTF_Font* font = TTF_OpenFont("fonts/upheavtt.ttf",24);
@@ -73,8 +79,13 @@ int main(){
 
     //defining objects locations
     SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
-    int addCubeLabel[2] = {25,SCREENHEIGHT-76};
-    SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,115,30};
+    int addCubeLabel[2] = {30,SCREENHEIGHT-76};
+    SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,80,30};
+
+    //colour button definitions
+    SDL_Rect colourRedButton = {SCREENWIDTH-150,SCREENHEIGHT-80,30,30};
+    SDL_Rect colourGreenButton = {SCREENWIDTH-100,SCREENHEIGHT-80,30,30};
+    SDL_Rect colourBlueButton = {SCREENWIDTH-50,SCREENHEIGHT-80,30,30};
 
 
     //main loop of window
@@ -85,6 +96,10 @@ int main(){
 
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT){
                 click = 1;
+                if (mouse_y < SCREENHEIGHT-100){holding = 1;}
+            }
+            if (event.type == SDL_MOUSEBUTTONUP && event.button.button == SDL_BUTTON_LEFT){
+                if (mouse_y <SCREENHEIGHT-100){holding = 2;}
             }
             if (event.type == SDL_KEYDOWN){
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
@@ -103,8 +118,8 @@ int main(){
         SDL_RenderClear(renderer);
 
         //draw cubes to screen
-        SetColor(renderer,BLUE);
         for (int i =0; i < cubesN; i++){
+            SetColor(renderer,cubeColours[i]);
             SDL_RenderFillRect(renderer,&cubes[i]);
         }
 
@@ -112,29 +127,60 @@ int main(){
         SetColor(renderer, DARKGRAY);
         SDL_RenderFillRect(renderer,&bottomBar);
 
-        //writing text
+        //
+        //UI on bottom bar
+        //
+
+        //cube buttton
         SetColor(renderer,GRAY);
         if (mode==1){SetColor(renderer,MIDGRAY);}
         SDL_RenderFillRect(renderer,&addCubeButton);
-        MakeText(renderer,font,"Add cube",addCubeLabel);
+        MakeText(renderer,font,"Cube",addCubeLabel);
+
+        SetColor(renderer,BLUE);
+        SDL_RenderFillRect(renderer,&colourBlueButton);
+        SetColor(renderer,GREEN);
+        SDL_RenderFillRect(renderer,&colourGreenButton);
+        SetColor(renderer,RED);
+        SDL_RenderFillRect(renderer,&colourRedButton);
+
 
         //checking for button presses
+        int cubeButton_btn = Button(addCubeButton);
+        if (cubeButton_btn){mode = 1;}
 
-        //add cube button
-        int cubeButton = Button(addCubeButton);
-        if (cubeButton == 1){mode = 1;}
+        int colourBlueButton_btn = Button(colourBlueButton);
+        if (colourBlueButton_btn){drawColour = BLUE;}
+
+        int colourGreenButton_btn = Button(colourGreenButton);
+        if (colourGreenButton_btn){drawColour = GREEN;}
         
+        int colourRedButton_btn = Button(colourRedButton);
+        if (colourRedButton_btn){drawColour = RED;}
 
         //making objects logic
         if (mouse_y < (SCREENHEIGHT-100)){
-            if (click == 1) {
-                if (mode == 1) {
+            if (mode == 1) {
+                if (click == 1) {
+                    first_x = mouse_x;
+                    first_y = mouse_y;
+                }
+                if (holding == 1){
+                    SetColor(renderer,BLACK);
+                    SDL_Rect drawingRect = {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
+                    SDL_RenderDrawRect(renderer,&drawingRect);
+                }
+                if (holding == 2){
                     cubesN += 1;
-                cubes = realloc(cubes, cubesN * sizeof(SDL_Rect));
-                cubes[cubesN-1] = (SDL_Rect) {mouse_x,mouse_y,50,50};
+                    cubes = realloc(cubes, cubesN * sizeof(SDL_Rect));
+                    cubeColours = realloc(cubeColours,cubesN * sizeof(SDL_Color));
+                    cubes[cubesN-1] = (SDL_Rect) {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
+                    cubeColours[cubesN-1] = drawColour;
+                    holding =0;
                 }
             }
         }
+
 
 
         
@@ -146,6 +192,7 @@ int main(){
 
     // when ending program
     free(cubes);
+    free(cubeColours);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_CloseFont(font);
