@@ -57,11 +57,10 @@ int main(){
     int addCubeLabel[2] = {30,SCREENHEIGHT-76};
     SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,80,30};
 
-    //colour button definitions
-    SDL_Rect colourRedButton = {SCREENWIDTH-150,SCREENHEIGHT-80,30,30};
-    SDL_Rect colourGreenButton = {SCREENWIDTH-100,SCREENHEIGHT-80,30,30};
-    SDL_Rect colourBlueButton = {SCREENWIDTH-50,SCREENHEIGHT-80,30,30};
-
+    //inputs definitions
+    SDL_Rect redInput = {500,SCREENHEIGHT-90,256,20};
+    SDL_Rect greenInput = {500,SCREENHEIGHT-60,256,20};
+    SDL_Rect blueInput = {500,SCREENHEIGHT-30,256,20};
 
     //main loop of window
     while (running){
@@ -113,26 +112,41 @@ int main(){
         SDL_RenderFillRect(renderer,&addCubeButton);
         MakeText(renderer,font,"Cube",addCubeLabel);
 
-        SetColor(renderer,BLUE);
-        SDL_RenderFillRect(renderer,&colourBlueButton);
-        SetColor(renderer,GREEN);
-        SDL_RenderFillRect(renderer,&colourGreenButton);
-        SetColor(renderer,RED);
-        SDL_RenderFillRect(renderer,&colourRedButton);
+        for (int r = 0; r < 256; r+=8){
+            SDL_Color tmpC = {r,0,0,255};
+            SDL_Rect tmpR = {redInput.x+r,redInput.y,8,redInput.h};
+            SetColor(renderer,tmpC);
+            SDL_RenderFillRect(renderer,&tmpR);
+        }
 
+        for (int r = 0; r < 256; r+=8){
+            SDL_Color tmpC = {0,r,0,255};
+            SDL_Rect tmpR = {greenInput.x+r,greenInput.y,8,greenInput.h};
+            SetColor(renderer,tmpC);
+            SDL_RenderFillRect(renderer,&tmpR);
+        }
 
+        for (int r = 0; r < 256; r+=8){
+            SDL_Color tmpC = {0,0,r,255};
+            SDL_Rect tmpR = {blueInput.x+r,blueInput.y,8,blueInput.h};
+            SetColor(renderer,tmpC);
+            SDL_RenderFillRect(renderer,&tmpR);
+        }
+        
         //checking for button presses
+
+        int redInput_btn = Button(redInput);
+        if (redInput_btn){drawColour.r = mouse_x - redInput.x;}
+
+        int greenInput_btn = Button(greenInput);
+        if (greenInput_btn){drawColour.g = mouse_x - greenInput.x;}
+
+        int blueInput_btn = Button(blueInput);
+        if (blueInput_btn){drawColour.b = mouse_x - blueInput.x;}
+
         int cubeButton_btn = Button(addCubeButton);
         if (cubeButton_btn){mode = 1;}
 
-        int colourBlueButton_btn = Button(colourBlueButton);
-        if (colourBlueButton_btn){drawColour = BLUE;}
-
-        int colourGreenButton_btn = Button(colourGreenButton);
-        if (colourGreenButton_btn){drawColour = GREEN;}
-        
-        int colourRedButton_btn = Button(colourRedButton);
-        if (colourRedButton_btn){drawColour = RED;}
 
         //making objects logic
         if (mouse_y < (SCREENHEIGHT-100)){
@@ -152,12 +166,10 @@ int main(){
                     cubeColours = realloc(cubeColours,cubesN * sizeof(SDL_Color));
                     cubes[cubesN-1] = (SDL_Rect) {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
                     cubeColours[cubesN-1] = drawColour;
-                    holding =0;
+                    holding = 0;
                 }
             }
         }
-
-        DrawColourPallet(renderer);
 
         
         //updates the display
