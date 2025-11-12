@@ -10,7 +10,7 @@ int first_x , first_y;
 int click;
 int mode = 0;
 int holding = 0;
-int dirty = 0;
+int pixelSize = 10;
 SDL_Color drawColour = {0,0,0,255};
 
 Uint32 frameStart;
@@ -54,8 +54,16 @@ int main(){
 
     //defining objects locations
     SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
+
     int addCubeLabel[2] = {30,SCREENHEIGHT-76};
     SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,80,30};
+
+    int freeDrawLabel[2] = {30,SCREENHEIGHT-36};
+    SDL_Rect freeDrawButton = {20,SCREENHEIGHT-40,80,30};
+
+    SDL_Rect redSlider = {500,SCREENHEIGHT-92,8,24};
+    SDL_Rect greenSlider = {500,SCREENHEIGHT-62,8,24};
+    SDL_Rect blueSlider = {500,SCREENHEIGHT-32,8,24};
 
     //inputs definitions
 
@@ -114,6 +122,13 @@ int main(){
         SDL_RenderFillRect(renderer,&addCubeButton);
         MakeText(renderer,font,"Cube",addCubeLabel);
 
+        //draw button
+        SetColor(renderer,GRAY);
+        if (mode == 2){SetColor(renderer,MIDGRAY);}
+        SDL_RenderFillRect(renderer,&freeDrawButton);
+        MakeText(renderer,font,"Draw",freeDrawLabel);
+
+        //Colour preview
         SetColor(renderer,drawColour);
         SDL_RenderFillRect(renderer,&previewColour);
 
@@ -123,6 +138,8 @@ int main(){
             SetColor(renderer,tmpC);
             SDL_RenderFillRect(renderer,&tmpR);
         }
+        SetColor(renderer,WHITE);
+        SDL_RenderFillRect(renderer,&redSlider);
 
         for (int r = 0; r < 256; r+=8){
             SDL_Color tmpC = {0,r,0,255};
@@ -130,6 +147,8 @@ int main(){
             SetColor(renderer,tmpC);
             SDL_RenderFillRect(renderer,&tmpR);
         }
+        SetColor(renderer,WHITE);
+        SDL_RenderFillRect(renderer,&greenSlider);
 
         for (int r = 0; r < 256; r+=8){
             SDL_Color tmpC = {0,0,r,255};
@@ -137,42 +156,71 @@ int main(){
             SetColor(renderer,tmpC);
             SDL_RenderFillRect(renderer,&tmpR);
         }
+        SetColor(renderer,WHITE);
+        SDL_RenderFillRect(renderer,&blueSlider);
         
         //checking for button presses
 
         int redInput_btn = Button(redInput);
-        if (redInput_btn){drawColour.r = mouse_x - redInput.x;}
+        if (redInput_btn){
+            drawColour.r = mouse_x - redInput.x;
+            redSlider.x = mouse_x;
+        }
 
         int greenInput_btn = Button(greenInput);
-        if (greenInput_btn){drawColour.g = mouse_x - greenInput.x;}
+        if (greenInput_btn){
+            drawColour.g = mouse_x - greenInput.x;
+            greenSlider.x = mouse_x;
+        }
 
         int blueInput_btn = Button(blueInput);
-        if (blueInput_btn){drawColour.b = mouse_x - blueInput.x;}
+        if (blueInput_btn){
+            drawColour.b = mouse_x - blueInput.x;
+            blueSlider.x = mouse_x;
+        }
 
         int cubeButton_btn = Button(addCubeButton);
         if (cubeButton_btn){mode = 1;}
+
+        int drawButton_btn = Button(freeDrawButton);
+        if (drawButton_btn){mode = 2;}
 
 
         //making objects logic
         if (mouse_y < (SCREENHEIGHT-100)){
             if (mode == 1) {
                 if (click == 1) {
-                    first_x = mouse_x;
-                    first_y = mouse_y;
+                    first_x = (mouse_x/pixelSize)*pixelSize;
+                    first_y = (mouse_y/pixelSize)*pixelSize;
                 }
                 if (holding == 1){
                     SetColor(renderer,BLACK);
-                    SDL_Rect drawingRect = {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
+                    int new_x = (mouse_x/pixelSize)*pixelSize;
+                    int new_y = (mouse_y/pixelSize)*pixelSize;
+                    SDL_Rect drawingRect = {first_x,first_y,new_x-first_x,new_y-first_y};
                     SDL_RenderDrawRect(renderer,&drawingRect);
                 }
                 if (holding == 2){
-                    SDL_Rect currentRect = {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
+                    int new_x = (mouse_x/pixelSize)*pixelSize;
+                    int new_y = (mouse_y/pixelSize)*pixelSize;
+                    SDL_Rect currentRect = {first_x,first_y,new_x-first_x,new_y-first_y};
                     //draw to the texture instead of base layer for improved performance
                     SDL_SetRenderTarget(renderer,baseLayer);
                     SetColor(renderer,drawColour);
                     SDL_RenderFillRect(renderer,&currentRect);
                     SDL_SetRenderTarget(renderer,NULL);
                     holding = 0;
+                }
+            }
+            if (mode == 2){
+                if (holding == 1){
+                    int x = (mouse_x/pixelSize)*pixelSize;
+                    int y = (mouse_y/pixelSize)*pixelSize;
+                    SDL_SetRenderTarget(renderer,baseLayer);
+                    SetColor(renderer,drawColour);
+                    SDL_Rect tmp = {x,y,pixelSize,pixelSize};
+                    SDL_RenderFillRect(renderer,&tmp);
+                    SDL_SetRenderTarget(renderer,NULL);
                 }
             }
         }
