@@ -10,15 +10,11 @@ int first_x , first_y;
 int click;
 int mode = 0;
 int holding = 0;
-SDL_Color drawColour;
+int dirty = 0;
+SDL_Color drawColour = {0,0,0,255};
 
 Uint32 frameStart;
 int frameTime;
-
-int cubesN = 0;
-SDL_Rect* cubes;
-SDL_Color* cubeColours;
-
 
 void SetColor(SDL_Renderer* r, SDL_Color c);
 void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]);
@@ -30,10 +26,6 @@ void DrawColourPallet(SDL_Renderer* r);
 int main(){
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-
-    //initialise the cube array
-    cubes = malloc(cubesN * sizeof(SDL_Rect));
-    cubeColours = malloc(cubesN * sizeof(SDL_Color));
 
     //initialising the font 
     TTF_Font* font = TTF_OpenFont("fonts/upheavtt.ttf",24);
@@ -52,15 +44,30 @@ int main(){
     int running = 1;
     SDL_Event event;
 
+    //create the base texture for the actual drawing
+    SDL_Texture* baseLayer = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,SCREENWIDTH,SCREENHEIGHT);
+    SDL_SetTextureBlendMode(baseLayer,SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer,baseLayer);
+    SetColor(renderer,WHITE);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer,NULL);
+
     //defining objects locations
     SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
     int addCubeLabel[2] = {30,SCREENHEIGHT-76};
     SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,80,30};
 
     //inputs definitions
+
+    SDL_Rect previewColour = {430,SCREENHEIGHT-90,50,80};
+
     SDL_Rect redInput = {500,SCREENHEIGHT-90,256,20};
     SDL_Rect greenInput = {500,SCREENHEIGHT-60,256,20};
     SDL_Rect blueInput = {500,SCREENHEIGHT-30,256,20};
+
+    //draw background
+    SetColor(renderer, GRAY);
+    SDL_RenderClear(renderer);
 
     //main loop of window
     while (running){
@@ -89,15 +96,10 @@ int main(){
         //
         //start drawing area
         //
-        SetColor(renderer, GRAY);
-        SDL_RenderClear(renderer);
-
-        //draw cubes to screen
-        for (int i =0; i < cubesN; i++){
-            SetColor(renderer,cubeColours[i]);
-            SDL_RenderFillRect(renderer,&cubes[i]);
-        }
-
+        
+        //draw the texture layer first
+        SDL_RenderCopy(renderer,baseLayer,NULL,NULL);
+        
         //draw the bottom bar
         SetColor(renderer, DARKGRAY);
         SDL_RenderFillRect(renderer,&bottomBar);
@@ -111,6 +113,9 @@ int main(){
         if (mode==1){SetColor(renderer,MIDGRAY);}
         SDL_RenderFillRect(renderer,&addCubeButton);
         MakeText(renderer,font,"Cube",addCubeLabel);
+
+        SetColor(renderer,drawColour);
+        SDL_RenderFillRect(renderer,&previewColour);
 
         for (int r = 0; r < 256; r+=8){
             SDL_Color tmpC = {r,0,0,255};
@@ -161,11 +166,12 @@ int main(){
                     SDL_RenderDrawRect(renderer,&drawingRect);
                 }
                 if (holding == 2){
-                    cubesN += 1;
-                    cubes = realloc(cubes, cubesN * sizeof(SDL_Rect));
-                    cubeColours = realloc(cubeColours,cubesN * sizeof(SDL_Color));
-                    cubes[cubesN-1] = (SDL_Rect) {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
-                    cubeColours[cubesN-1] = drawColour;
+                    SDL_Rect currentRect = {first_x,first_y,mouse_x-first_x,mouse_y-first_y};
+                    //draw to the texture instead of base layer for improved performance
+                    SDL_SetRenderTarget(renderer,baseLayer);
+                    SetColor(renderer,drawColour);
+                    SDL_RenderFillRect(renderer,&currentRect);
+                    SDL_SetRenderTarget(renderer,NULL);
                     holding = 0;
                 }
             }
@@ -174,7 +180,7 @@ int main(){
         
         //updates the display
         SDL_RenderPresent(renderer);
-
+        
         //FPS
         frameTime = SDL_GetTicks() - frameStart;
         if (FRAMEDELAY > frameTime){SDL_Delay(FRAMEDELAY - frameTime);}
@@ -183,8 +189,6 @@ int main(){
 
 
     // when ending program
-    free(cubes);
-    free(cubeColours);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_CloseFont(font);
