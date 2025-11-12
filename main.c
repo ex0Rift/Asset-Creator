@@ -12,6 +12,8 @@ int mode = 0;
 int holding = 0;
 SDL_Color drawColour;
 
+Uint32 frameStart;
+int frameTime;
 
 int cubesN = 0;
 SDL_Rect* cubes;
@@ -21,6 +23,7 @@ SDL_Color* cubeColours;
 void SetColor(SDL_Renderer* r, SDL_Color c);
 void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]);
 int Button(SDL_Rect r);
+void DrawColourPallet(SDL_Renderer* r);
 
 
 
@@ -62,6 +65,7 @@ int main(){
 
     //main loop of window
     while (running){
+        frameStart = SDL_GetTicks();
         click = 0;//set clikc to zero at the start of each loop
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {running = 0;}
@@ -153,11 +157,15 @@ int main(){
             }
         }
 
-
+        DrawColourPallet(renderer);
 
         
         //updates the display
         SDL_RenderPresent(renderer);
+
+        //FPS
+        frameTime = SDL_GetTicks() - frameStart;
+        if (FRAMEDELAY > frameTime){SDL_Delay(FRAMEDELAY - frameTime);}
     }
 
 
@@ -204,3 +212,16 @@ int Button(SDL_Rect r){
 void SetColor(SDL_Renderer* r, SDL_Color c){
     SDL_SetRenderDrawColor(r,c.r,c.g,c.b,c.a);
 }
+
+void DrawColourPallet(SDL_Renderer* renderer){
+    for (int r = 0; r < 256; r+=10){
+        for (int g =0; g < 256; g+=10){
+            for (int b = 0; b < 256; b+=10){
+                SDL_Color tcolour = {g,r,b,255};
+                SDL_Rect tcube = {r,g,10,10};
+                SetColor(renderer,tcolour);
+                SDL_RenderFillRect(renderer,&tcube);
+            }
+        }
+    }
+}  
