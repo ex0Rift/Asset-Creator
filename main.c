@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include "utils.h"
 
 //defining variables here
@@ -11,6 +12,8 @@ int click;
 int mode = 0;
 int holding = 0;
 int pixelSize = 10;
+int brushSize = 10;
+char str[10];
 SDL_Color drawColour = {0,0,0,255};
 
 Uint32 frameStart;
@@ -25,6 +28,7 @@ void DrawColourPallet(SDL_Renderer* r);
 
 int main(){
     SDL_Init(SDL_INIT_VIDEO);
+    IMG_Init(IMG_INIT_PNG);
     TTF_Init();
 
     //initialising the font 
@@ -60,10 +64,20 @@ int main(){
 
     int freeDrawLabel[2] = {30,SCREENHEIGHT-36};
     SDL_Rect freeDrawButton = {20,SCREENHEIGHT-40,80,30};
+    SDL_Rect drawBrushPlus = {180,SCREENHEIGHT-40,30,30};
+    int brushPlusLabel[2] = {188,SCREENHEIGHT-38};
+    SDL_Rect drawBrushMinus = {110,SCREENHEIGHT-40,30,30};
+    int brushMinusLabel[2] = {118,SCREENHEIGHT-38};
+    int sizeLabel[2] = {150,SCREENHEIGHT-38};
 
     SDL_Rect redSlider = {500,SCREENHEIGHT-92,8,24};
     SDL_Rect greenSlider = {500,SCREENHEIGHT-62,8,24};
     SDL_Rect blueSlider = {500,SCREENHEIGHT-32,8,24};
+
+    //objects for menuBar
+    SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
+    SDL_Rect saveButton = {0,0,100,30};
+    int saveButtonLabel[2] = {20,2};
 
     //inputs definitions
 
@@ -107,14 +121,21 @@ int main(){
         
         //draw the texture layer first
         SDL_RenderCopy(renderer,baseLayer,NULL,NULL);
-        
-        //draw the bottom bar
-        SetColor(renderer, DARKGRAY);
-        SDL_RenderFillRect(renderer,&bottomBar);
 
         //
-        //UI on bottom bar
+        //Menu bar
         //
+        SetColor(renderer,DARKERGRAY);
+        SDL_RenderFillRect(renderer,&menuBar);
+        SetColor(renderer,GRAY);
+        SDL_RenderFillRect(renderer,&saveButton);
+        MakeText(renderer,font,"Save",saveButtonLabel);
+
+        //
+        //bottom bar
+        //
+        SetColor(renderer, DARKGRAY);
+        SDL_RenderFillRect(renderer,&bottomBar);
 
         //cube buttton
         SetColor(renderer,GRAY);
@@ -127,6 +148,15 @@ int main(){
         if (mode == 2){SetColor(renderer,MIDGRAY);}
         SDL_RenderFillRect(renderer,&freeDrawButton);
         MakeText(renderer,font,"Draw",freeDrawLabel);
+
+        //draw bush buttons
+        SetColor(renderer,GRAY);
+        SDL_RenderFillRect(renderer,&drawBrushPlus);
+        SDL_RenderFillRect(renderer,&drawBrushMinus);
+        MakeText(renderer,font,"+",brushPlusLabel);
+        MakeText(renderer,font,"-",brushMinusLabel);
+        snprintf(str,sizeof(str),"%d",(brushSize/pixelSize));
+        MakeText(renderer,font,str,sizeLabel);
 
         //Colour preview
         SetColor(renderer,drawColour);
@@ -185,6 +215,24 @@ int main(){
         int drawButton_btn = Button(freeDrawButton);
         if (drawButton_btn){mode = 2;}
 
+        int brushPlus_btn = Button(drawBrushPlus);
+        if (brushPlus_btn){brushSize+=pixelSize;}
+
+        int brushMinus_btn = Button(drawBrushMinus);
+        if (brushMinus_btn){if(brushSize > 0){brushSize-=pixelSize;}}
+
+        //button presses for menu bar
+
+        int saveButton_btn = Button(saveButton);
+        if (saveButton_btn){
+            SDL_Surface* saveSurface = SDL_CreateRGBSurfaceWithFormat(0,SCREENWIDTH,SCREENHEIGHT,32,SDL_PIXELFORMAT_RGBA32);
+            SDL_Rect area = {0,30,SCREENWIDTH,SCREENHEIGHT-130};
+            SDL_RenderReadPixels(renderer,&area,SDL_PIXELFORMAT_RGBA32,saveSurface->pixels, saveSurface->pitch);
+
+            IMG_SavePNG(saveSurface,"output.png");
+            SDL_FreeSurface(saveSurface);
+        }
+
 
         //making objects logic
         if (mouse_y < (SCREENHEIGHT-100)){
@@ -218,7 +266,7 @@ int main(){
                     int y = (mouse_y/pixelSize)*pixelSize;
                     SDL_SetRenderTarget(renderer,baseLayer);
                     SetColor(renderer,drawColour);
-                    SDL_Rect tmp = {x,y,pixelSize,pixelSize};
+                    SDL_Rect tmp = {x,y,brushSize,brushSize};
                     SDL_RenderFillRect(renderer,&tmp);
                     SDL_SetRenderTarget(renderer,NULL);
                 }

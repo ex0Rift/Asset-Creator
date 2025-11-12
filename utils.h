@@ -15,6 +15,7 @@ const SDL_Color BLACK ={0,0,0,255};
 const SDL_Color WHITE = {255,255,255,255};
 const SDL_Color GRAY = {180,180,180,255};
 const SDL_Color DARKGRAY = {120,120,120,255};
+const SDL_Color DARKERGRAY = {100,100,100,255};
 const SDL_Color MIDGRAY = {140,140,140,255};
 
 #endif
