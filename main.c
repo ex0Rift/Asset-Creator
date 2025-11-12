@@ -17,38 +17,10 @@ int cubesN = 0;
 SDL_Rect* cubes;
 SDL_Color* cubeColours;
 
-//this function just makes it easier to change the colour by letting me use my own from utils.h
-void SetColor(SDL_Renderer* r, SDL_Color c){
-    SDL_SetRenderDrawColor(r,c.r,c.g,c.b,c.a);
-}
 
-void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]){
-    //makes surface and texture
-    SDL_Surface* surface = TTF_RenderText_Solid(font,text,BLACK);
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(r,surface);
-    //frees the surface
-    SDL_FreeSurface(surface);
-    //checks size of text
-    int textWidth , textHeight;
-    TTF_SizeText(font,text, &textWidth, &textHeight);
-    //draws the text
-    SDL_Rect dest = {dim[0],dim[1],textWidth,textHeight};
-    SDL_RenderCopy(r,texture,NULL,&dest);
-}
-
-int Button(SDL_Rect r){
-    //checks if mouse pos is in the button
-    if (
-        r.x < mouse_x && 
-        mouse_x < r.x+r.w && 
-        r.y < mouse_y && 
-        mouse_y < r.y+r.h
-    ){
-        //checks if left click is pressed
-        if (click == 1){return 1;}
-     }
-    return 0;
-}
+void SetColor(SDL_Renderer* r, SDL_Color c);
+void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]);
+int Button(SDL_Rect r);
 
 
 
@@ -199,4 +171,36 @@ int main(){
     SDL_Quit();
     
     return 0;
+}
+
+void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]){
+    //makes surface and texture
+    SDL_Surface* surface = TTF_RenderText_Solid(font,text,BLACK);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(r,surface);
+    //frees the surface
+    SDL_FreeSurface(surface);
+    //checks size of text
+    int textWidth , textHeight;
+    TTF_SizeText(font,text, &textWidth, &textHeight);
+    //draws the text
+    SDL_Rect dest = {dim[0],dim[1],textWidth,textHeight};
+    SDL_RenderCopy(r,texture,NULL,&dest);
+}
+
+int Button(SDL_Rect r){
+    //checks if mouse pos is in the button
+    if (
+        r.x < mouse_x && 
+        mouse_x < r.x+r.w && 
+        r.y < mouse_y && 
+        mouse_y < r.y+r.h
+    ){
+        //checks if left click is pressed
+        if (click == 1){return 1;}
+     }
+    return 0;
+}
+
+void SetColor(SDL_Renderer* r, SDL_Color c){
+    SDL_SetRenderDrawColor(r,c.r,c.g,c.b,c.a);
 }
