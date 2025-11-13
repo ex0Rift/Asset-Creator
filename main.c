@@ -9,8 +9,13 @@
 int SCREENHEIGHT = 600;
 int SCREENWIDTH = 800;
 
+int canvasH = 400;
+int canvasW = 400;
+
+int newCanvasMode = 0;
+
 int mouse_x , mouse_y;
-int first_x , first_y;
+int first_x , first_y , first_x_global , first_y_global;
 int click;
 int mode = 0;
 int holding = 0;
@@ -121,6 +126,10 @@ int main(){
             blueSlider.x+=dif;
         }
 
+        //new canvas ui
+        SDL_Rect newCanvasBackground = {10,40,500,300};
+        
+
 
         frameStart = SDL_GetTicks();
         click = 0;//set clikc to zero at the start of each loop
@@ -143,7 +152,7 @@ int main(){
         
         //gets mouse pos and updates them
         Uint32 buttons = SDL_GetMouseState(&mouse_x,&mouse_y);
-
+        
         //
         //start drawing area
         //
@@ -151,9 +160,12 @@ int main(){
         SetColor(renderer, GRAY);
         SDL_RenderClear(renderer);
         
-        //draw the texture layer first
-        SDL_Rect baseLayerDest = {0,0,DEFAULTSCREENWIDTH,DEFAULTSCREENHEIGHT};
+        //set up the canvas before the UI
+        SDL_Rect baseLayerDest = {(SCREENWIDTH/2)-(canvasW/2),((SCREENHEIGHT-100)/2)-(canvasH/2),canvasW,canvasH};
         SDL_RenderCopy(renderer,baseLayer,NULL,&baseLayerDest);
+        //mouse coords local to the canvas
+        int local_x = mouse_x - baseLayerDest.x;
+        int local_y = mouse_y - baseLayerDest.y;
 
         //
         //Menu bar
@@ -169,7 +181,7 @@ int main(){
 
         //Notification
         if (currentNotificationTime > 0){
-            SetColor(renderer,GRAY);
+            SetColor(renderer,MIDGRAY);
             SDL_RenderFillRect(renderer,&notificationBox);
             SetColor(renderer,BLACK);
             SDL_RenderDrawRect(renderer,&notificationBox);
@@ -235,6 +247,16 @@ int main(){
         }
         SetColor(renderer,WHITE);
         SDL_RenderFillRect(renderer,&blueSlider);
+
+        //
+        //NEW CANVAS UI
+        //
+        if (newCanvasMode){
+            SetColor(renderer,MIDGRAY);
+            SDL_RenderFillRect(renderer,&newCanvasBackground);
+            SetColor(renderer,BLACK);
+            SDL_RenderDrawRect(renderer,&newCanvasBackground);
+        }
         
         //checking for button presses
 
@@ -274,8 +296,8 @@ int main(){
         if (saveButton_btn){
             currentNotificationTime = NOTIFICATIONTIME;
             strcpy(notificationText,"Saved!");
-            SDL_Surface* saveSurface = SDL_CreateRGBSurfaceWithFormat(0,SCREENWIDTH,SCREENHEIGHT,32,SDL_PIXELFORMAT_RGBA32);
-            SDL_Rect area = {0,30,SCREENWIDTH,SCREENHEIGHT-130};
+            SDL_Surface* saveSurface = SDL_CreateRGBSurfaceWithFormat(0,baseLayerDest.w,baseLayerDest.h,32,SDL_PIXELFORMAT_RGBA32);
+            SDL_Rect area = {baseLayerDest.x,baseLayerDest.y,baseLayerDest.w,baseLayerDest.h};
             SDL_RenderReadPixels(renderer,&area,SDL_PIXELFORMAT_RGBA32,saveSurface->pixels, saveSurface->pitch);
 
             IMG_SavePNG(saveSurface,"output.png");
@@ -284,49 +306,50 @@ int main(){
 
         int newButton_btn = Button(newButton);
         if (newButton_btn){
-            SDL_DestroyTexture(baseLayer);
-            SDL_Texture* baseLayer = MakeCanvas(renderer);
+            newCanvasMode = 1;
+            //SDL_DestroyTexture(baseLayer);
+            //SDL_Texture* baseLayer = MakeCanvas(renderer);
         }
-
 
         //making objects logic
-        if (mouse_y < (SCREENHEIGHT-100)){
-            if (mode == 1) {
-                if (click == 1) {
-                    first_x = (mouse_x/pixelSize)*pixelSize;
-                    first_y = (mouse_y/pixelSize)*pixelSize;
-                }
-                if (holding == 1){
-                    SetColor(renderer,BLACK);
-                    int new_x = (mouse_x/pixelSize)*pixelSize;
-                    int new_y = (mouse_y/pixelSize)*pixelSize;
-                    SDL_Rect drawingRect = {first_x,first_y,new_x-first_x,new_y-first_y};
-                    SDL_RenderDrawRect(renderer,&drawingRect);
-                }
-                if (holding == 2){
-                    int new_x = (mouse_x/pixelSize)*pixelSize;
-                    int new_y = (mouse_y/pixelSize)*pixelSize;
-                    SDL_Rect currentRect = {first_x,first_y,new_x-first_x,new_y-first_y};
-                    //draw to the texture instead of base layer for improved performance
-                    SDL_SetRenderTarget(renderer,baseLayer);
-                    SetColor(renderer,drawColour);
-                    SDL_RenderFillRect(renderer,&currentRect);
-                    SDL_SetRenderTarget(renderer,NULL);
-                    holding = 0;
-                }
+        if (mode == 1) {
+            if (click == 1) {
+                first_x = (local_x/pixelSize)*pixelSize;
+                first_y = (local_y/pixelSize)*pixelSize;
+                first_x_global = (mouse_x/pixelSize)*pixelSize;
+                first_y_global = (mouse_y/pixelSize)*pixelSize;
             }
-            if (mode == 2){
-                if (holding == 1){
-                    int x = (mouse_x/pixelSize)*pixelSize;
-                    int y = (mouse_y/pixelSize)*pixelSize;
-                    SDL_SetRenderTarget(renderer,baseLayer);
-                    SetColor(renderer,drawColour);
-                    SDL_Rect tmp = {x,y,brushSize,brushSize};
-                    SDL_RenderFillRect(renderer,&tmp);
-                    SDL_SetRenderTarget(renderer,NULL);
-                }
+            if (holding == 1){
+                SetColor(renderer,BLACK);
+                int new_x = (mouse_x/pixelSize)*pixelSize;
+                int new_y = (mouse_y/pixelSize)*pixelSize;
+                SDL_Rect drawingRect = {first_x_global,first_y_global,new_x-first_x_global,new_y-first_y_global};
+                SDL_RenderDrawRect(renderer,&drawingRect);
+            }
+            if (holding == 2){
+                int new_x = (local_x/pixelSize)*pixelSize;
+                int new_y = (local_y/pixelSize)*pixelSize;
+                SDL_Rect currentRect = {first_x,first_y,new_x-first_x,new_y-first_y};
+                //draw to the texture instead of base layer for improved performance
+                SDL_SetRenderTarget(renderer,baseLayer);
+                SetColor(renderer,drawColour);
+                SDL_RenderFillRect(renderer,&currentRect);
+                SDL_SetRenderTarget(renderer,NULL);
+                holding = 0;
             }
         }
+        if (mode == 2){
+            if (holding == 1){
+                int x = (local_x/pixelSize)*pixelSize;
+                int y = (local_y/pixelSize)*pixelSize;
+                SDL_SetRenderTarget(renderer,baseLayer);
+                SetColor(renderer,drawColour);
+                SDL_Rect tmp = {x,y,brushSize,brushSize};
+                SDL_RenderFillRect(renderer,&tmp);
+                SDL_SetRenderTarget(renderer,NULL);
+            }
+        }
+        
 
         
         //updates the display
@@ -395,7 +418,7 @@ void DrawColourPallet(SDL_Renderer* renderer){
 
 SDL_Texture* MakeCanvas(SDL_Renderer* renderer){
     //create the base texture for the actual drawing
-    SDL_Texture* baseLayer = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,SCREENWIDTH,SCREENHEIGHT);
+    SDL_Texture* baseLayer = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,canvasW,canvasH);
     SDL_SetTextureBlendMode(baseLayer,SDL_BLENDMODE_BLEND);
     SDL_SetRenderTarget(renderer,baseLayer);
     SetColor(renderer,WHITE);
