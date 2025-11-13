@@ -28,7 +28,7 @@ void SetColor(SDL_Renderer* r, SDL_Color c);
 void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]);
 int Button(SDL_Rect r);
 void DrawColourPallet(SDL_Renderer* r);
-
+SDL_Texture* MakeCanvas(SDL_Renderer* renderer);
 
 
 int main(){
@@ -55,14 +55,8 @@ int main(){
     int running = 1;
     SDL_Event event;
 
-    //create the base texture for the actual drawing
-    SDL_Texture* baseLayer = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,SCREENWIDTH,SCREENHEIGHT);
-    SDL_SetTextureBlendMode(baseLayer,SDL_BLENDMODE_BLEND);
-    SDL_SetRenderTarget(renderer,baseLayer);
-    SetColor(renderer,WHITE);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderTarget(renderer,NULL);
-
+    //make the texture for drawing on
+    SDL_Texture* baseLayer = MakeCanvas(renderer);
     
     //draw background
     SetColor(renderer, GRAY);
@@ -101,7 +95,8 @@ int main(){
         SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
         SDL_Rect saveButton = {0,0,100,30};
         int saveButtonLabel[2] = {20,2};
-
+        SDL_Rect newButton = {102,0,100,30};
+        int newButtonLabel[2] = {120,2};
         //Notification drawing
         SDL_Rect notificationBox = {SCREENWIDTH-200,SCREENHEIGHT-150,180,40};
         int notificationLabel[2] = {SCREENWIDTH-190,SCREENHEIGHT-142};
@@ -168,6 +163,9 @@ int main(){
         SetColor(renderer,GRAY);
         SDL_RenderFillRect(renderer,&saveButton);
         MakeText(renderer,font,"Save",saveButtonLabel);
+
+        SDL_RenderFillRect(renderer,&newButton);
+        MakeText(renderer,font,"New",newButtonLabel);
 
         //Notification
         if (currentNotificationTime > 0){
@@ -284,6 +282,12 @@ int main(){
             SDL_FreeSurface(saveSurface);
         }
 
+        int newButton_btn = Button(newButton);
+        if (newButton_btn){
+            SDL_DestroyTexture(baseLayer);
+            SDL_Texture* baseLayer = MakeCanvas(renderer);
+        }
+
 
         //making objects logic
         if (mouse_y < (SCREENHEIGHT-100)){
@@ -388,3 +392,14 @@ void DrawColourPallet(SDL_Renderer* renderer){
         }
     }
 }  
+
+SDL_Texture* MakeCanvas(SDL_Renderer* renderer){
+    //create the base texture for the actual drawing
+    SDL_Texture* baseLayer = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,SCREENWIDTH,SCREENHEIGHT);
+    SDL_SetTextureBlendMode(baseLayer,SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer,baseLayer);
+    SetColor(renderer,WHITE);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderTarget(renderer,NULL);
+    return baseLayer;
+}
