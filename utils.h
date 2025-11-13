@@ -2,11 +2,13 @@
 #define UTILS_H
 #include <SDL2/SDL.h>
 
-const int SCREENHEIGHT = 600;
-const int SCREENWIDTH = 800;
+const int DEFAULTSCREENHEIGHT = 600;
+const int DEFAULTSCREENWIDTH = 800;
 
-const int FPS = 60;
+const int FPS = 120;
 const int FRAMEDELAY = 1000 / FPS;
+
+const int NOTIFICATIONTIME = 240;
 
 const SDL_Color RED = {255,0,0,255};
 const SDL_Color GREEN = {0,255,0,255};

@@ -6,6 +6,9 @@
 #include "utils.h"
 
 //defining variables here
+int SCREENHEIGHT = 600;
+int SCREENWIDTH = 800;
+
 int mouse_x , mouse_y;
 int first_x , first_y;
 int click;
@@ -13,6 +16,8 @@ int mode = 0;
 int holding = 0;
 int pixelSize = 10;
 int brushSize = 10;
+int currentNotificationTime = 0;
+char notificationText[] = "Notification";
 char str[10];
 SDL_Color drawColour = {0,0,0,255};
 
@@ -39,9 +44,11 @@ int main(){
         "Asset Creator",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        SCREENWIDTH,SCREENHEIGHT,
-        0
+        DEFAULTSCREENWIDTH,DEFAULTSCREENHEIGHT,
+        SDL_WINDOW_RESIZABLE
     );
+
+    SDL_SetWindowMinimumSize(window,DEFAULTSCREENWIDTH,DEFAULTSCREENHEIGHT);
 
     //create the render and start events
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1,0);
@@ -56,43 +63,70 @@ int main(){
     SDL_RenderClear(renderer);
     SDL_SetRenderTarget(renderer,NULL);
 
-    //defining objects locations
-    SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
-
-    int addCubeLabel[2] = {30,SCREENHEIGHT-76};
-    SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,80,30};
-
-    int freeDrawLabel[2] = {30,SCREENHEIGHT-36};
-    SDL_Rect freeDrawButton = {20,SCREENHEIGHT-40,80,30};
-    SDL_Rect drawBrushPlus = {180,SCREENHEIGHT-40,30,30};
-    int brushPlusLabel[2] = {188,SCREENHEIGHT-38};
-    SDL_Rect drawBrushMinus = {110,SCREENHEIGHT-40,30,30};
-    int brushMinusLabel[2] = {118,SCREENHEIGHT-38};
-    int sizeLabel[2] = {150,SCREENHEIGHT-38};
-
-    SDL_Rect redSlider = {500,SCREENHEIGHT-92,8,24};
-    SDL_Rect greenSlider = {500,SCREENHEIGHT-62,8,24};
-    SDL_Rect blueSlider = {500,SCREENHEIGHT-32,8,24};
-
-    //objects for menuBar
-    SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
-    SDL_Rect saveButton = {0,0,100,30};
-    int saveButtonLabel[2] = {20,2};
-
-    //inputs definitions
-
-    SDL_Rect previewColour = {430,SCREENHEIGHT-90,50,80};
-
-    SDL_Rect redInput = {500,SCREENHEIGHT-90,256,20};
-    SDL_Rect greenInput = {500,SCREENHEIGHT-60,256,20};
-    SDL_Rect blueInput = {500,SCREENHEIGHT-30,256,20};
-
+    
     //draw background
     SetColor(renderer, GRAY);
     SDL_RenderClear(renderer);
 
+
+
+    //these objects should not be fuly updateed per frame.
+    SDL_Rect redSlider = {500,SCREENHEIGHT-92,8,24};
+    SDL_Rect greenSlider = {500,SCREENHEIGHT-62,8,24};
+    SDL_Rect blueSlider = {500,SCREENHEIGHT-32,8,24};
+
     //main loop of window
     while (running){
+        int oldsw = SCREENWIDTH;
+        int oldsh = SCREENHEIGHT;
+        SDL_GetWindowSize(window,&SCREENWIDTH,&SCREENHEIGHT);
+
+        //define object positions per frame for window resizing
+
+        //defining objects locations
+        SDL_Rect bottomBar = {0,SCREENHEIGHT-100,SCREENWIDTH,100};
+
+        int addCubeLabel[2] = {30,SCREENHEIGHT-76};
+        SDL_Rect addCubeButton = {20,SCREENHEIGHT-80,80,30};
+
+        int freeDrawLabel[2] = {30,SCREENHEIGHT-36};
+        SDL_Rect freeDrawButton = {20,SCREENHEIGHT-40,80,30};
+        SDL_Rect drawBrushPlus = {180,SCREENHEIGHT-40,30,30};
+        int brushPlusLabel[2] = {188,SCREENHEIGHT-38};
+        SDL_Rect drawBrushMinus = {110,SCREENHEIGHT-40,30,30};
+        int brushMinusLabel[2] = {118,SCREENHEIGHT-38};
+        int sizeLabel[2] = {150,SCREENHEIGHT-38};
+
+        //objects for menuBar
+        SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
+        SDL_Rect saveButton = {0,0,100,30};
+        int saveButtonLabel[2] = {20,2};
+
+        //Notification drawing
+        SDL_Rect notificationBox = {SCREENWIDTH-200,SCREENHEIGHT-150,180,40};
+        int notificationLabel[2] = {SCREENWIDTH-190,SCREENHEIGHT-142};
+
+        //inputs definitions
+
+        SDL_Rect previewColour = {SCREENWIDTH-380,SCREENHEIGHT-90,50,80};
+
+        SDL_Rect redInput = {SCREENWIDTH-300,SCREENHEIGHT-90,256,20};
+        SDL_Rect greenInput = {SCREENWIDTH-300,SCREENHEIGHT-60,256,20};
+        SDL_Rect blueInput = {SCREENWIDTH-300,SCREENHEIGHT-30,256,20};
+
+        
+        redSlider.y = SCREENHEIGHT-92;
+        greenSlider.y = SCREENHEIGHT-62;
+        blueSlider.y = SCREENHEIGHT-32;
+
+        if (oldsw != SCREENWIDTH){
+            int dif = SCREENWIDTH-oldsw;
+            redSlider.x +=dif;
+            greenSlider.x +=dif;
+            blueSlider.x+=dif;
+        }
+
+
         frameStart = SDL_GetTicks();
         click = 0;//set clikc to zero at the start of each loop
         while (SDL_PollEvent(&event)) {
@@ -118,9 +152,13 @@ int main(){
         //
         //start drawing area
         //
+        //draw background
+        SetColor(renderer, GRAY);
+        SDL_RenderClear(renderer);
         
         //draw the texture layer first
-        SDL_RenderCopy(renderer,baseLayer,NULL,NULL);
+        SDL_Rect baseLayerDest = {0,0,DEFAULTSCREENWIDTH,DEFAULTSCREENHEIGHT};
+        SDL_RenderCopy(renderer,baseLayer,NULL,&baseLayerDest);
 
         //
         //Menu bar
@@ -130,6 +168,17 @@ int main(){
         SetColor(renderer,GRAY);
         SDL_RenderFillRect(renderer,&saveButton);
         MakeText(renderer,font,"Save",saveButtonLabel);
+
+        //Notification
+        if (currentNotificationTime > 0){
+            SetColor(renderer,GRAY);
+            SDL_RenderFillRect(renderer,&notificationBox);
+            SetColor(renderer,BLACK);
+            SDL_RenderDrawRect(renderer,&notificationBox);
+            MakeText(renderer,font,notificationText,notificationLabel);
+
+            currentNotificationTime--;
+        }
 
         //
         //bottom bar
@@ -225,6 +274,8 @@ int main(){
 
         int saveButton_btn = Button(saveButton);
         if (saveButton_btn){
+            currentNotificationTime = NOTIFICATIONTIME;
+            strcpy(notificationText,"Saved!");
             SDL_Surface* saveSurface = SDL_CreateRGBSurfaceWithFormat(0,SCREENWIDTH,SCREENHEIGHT,32,SDL_PIXELFORMAT_RGBA32);
             SDL_Rect area = {0,30,SCREENWIDTH,SCREENHEIGHT-130};
             SDL_RenderReadPixels(renderer,&area,SDL_PIXELFORMAT_RGBA32,saveSurface->pixels, saveSurface->pitch);
