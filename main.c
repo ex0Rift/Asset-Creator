@@ -12,6 +12,8 @@ int SCREENWIDTH = 800;
 int canvasH = 400;
 int canvasW = 400;
 
+int oldCanvasH , oldCanvasW;
+
 int newCanvasMode = 0;
 
 int mouse_x , mouse_y;
@@ -127,8 +129,23 @@ int main(){
         }
 
         //new canvas ui
-        SDL_Rect newCanvasBackground = {10,40,500,300};
-        
+        int newCanvasLabel[2]= {15,45};
+        int plusHLabel[2]= {127,100};
+        int minusHLabel[2]= {27,100};
+        int plusWLabel[2]= {127,150};
+        int minusWLabel[2]= {27,150};
+
+        int hLabel[2] = {60,100};
+        int wLabel[2] = {60,150};
+
+        SDL_Rect newCanvasBackground = {10,40,300,250};
+        SDL_Rect newCanvasPlusHeight = {120,100,30,30};
+        SDL_Rect newCanvasMinusHeight = {20,100,30,30};
+        SDL_Rect newCanvasPlusWidth = {120,150,30,30};
+        SDL_Rect newCanvasMinusWidth = {20,150,30,30};
+
+        SDL_Rect newCanvasButton = {200,250,100,30};
+        int newCanvasButtonLabel[2] = {207,250};
 
 
         frameStart = SDL_GetTicks();
@@ -252,13 +269,56 @@ int main(){
         //NEW CANVAS UI
         //
         if (newCanvasMode){
+            //Prevent drawing while in UI
+            mode = 0;
             SetColor(renderer,MIDGRAY);
             SDL_RenderFillRect(renderer,&newCanvasBackground);
             SetColor(renderer,BLACK);
             SDL_RenderDrawRect(renderer,&newCanvasBackground);
+
+            MakeText(renderer,font,"New Canvas",newCanvasLabel);
+
+            SetColor(renderer,GRAY);
+            SDL_RenderFillRect(renderer,&newCanvasMinusWidth);
+            MakeText(renderer,font,"-",minusWLabel);
+            SDL_RenderFillRect(renderer,&newCanvasPlusWidth);
+            MakeText(renderer,font,"+",plusWLabel);
+            snprintf(str,sizeof(str),"%d",(canvasW));
+            MakeText(renderer,font,str,wLabel);
+            SDL_RenderFillRect(renderer,&newCanvasMinusHeight);
+            MakeText(renderer,font,"-",minusHLabel);
+            SDL_RenderFillRect(renderer,&newCanvasPlusHeight);
+            MakeText(renderer,font,"+",plusHLabel);
+            snprintf(str,sizeof(str),"%d",(canvasH));
+            MakeText(renderer,font,str,hLabel);
+
+            SDL_RenderFillRect(renderer,&newCanvasButton);
+            MakeText(renderer,font,"Create",newCanvasButtonLabel);
         }
         
         //checking for button presses
+
+        //New canvas buttons
+        int newCanvasMinusWidth_btn = Button(newCanvasMinusWidth);
+        if (newCanvasMinusWidth_btn){canvasW -= 10;}
+
+        int newCanvasMinusHeight_btn = Button(newCanvasMinusHeight);
+        if (newCanvasMinusHeight_btn){canvasH -= 10;}
+
+        int newCanvasPlusWidth_btn = Button(newCanvasPlusWidth);
+        if (newCanvasPlusWidth_btn){canvasW += 10;}
+
+        int newCanvasPlusHeight_btn = Button(newCanvasPlusHeight);
+        if (newCanvasPlusHeight_btn){canvasH += 10;}
+
+        int newCanvasButton_btn = Button(newCanvasButton);
+        if (newCanvasButton_btn){
+            newCanvasMode = 0;
+            SDL_DestroyTexture(baseLayer);
+            SDL_Texture* baseLayer = MakeCanvas(renderer);
+        }
+
+
 
         int redInput_btn = Button(redInput);
         if (redInput_btn){
@@ -290,6 +350,7 @@ int main(){
         int brushMinus_btn = Button(drawBrushMinus);
         if (brushMinus_btn){if(brushSize > 0){brushSize-=pixelSize;}}
 
+
         //button presses for menu bar
 
         int saveButton_btn = Button(saveButton);
@@ -306,9 +367,15 @@ int main(){
 
         int newButton_btn = Button(newButton);
         if (newButton_btn){
-            newCanvasMode = 1;
-            //SDL_DestroyTexture(baseLayer);
-            //SDL_Texture* baseLayer = MakeCanvas(renderer);
+            if (newCanvasMode == 0){
+                oldCanvasW = canvasW;
+                oldCanvasH = canvasH;
+                newCanvasMode = 1;
+            }else{
+                canvasH = oldCanvasH;
+                canvasW = oldCanvasW;
+                newCanvasMode = 0;
+            }
         }
 
         //making objects logic
