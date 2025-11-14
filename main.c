@@ -16,7 +16,8 @@ int oldCanvasH , oldCanvasW;
 
 int newCanvasMode = 0;
 
-int mouse_x , mouse_y;
+SDL_Surface* surface;
+int mouse_x , mouse_y , local_x , local_y;
 int first_x , first_y , first_x_global , first_y_global;
 int click;
 int mode = 0;
@@ -36,6 +37,7 @@ void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]);
 int Button(SDL_Rect r);
 void DrawColourPallet(SDL_Renderer* r);
 SDL_Texture* MakeCanvas(SDL_Renderer* renderer);
+SDL_Color GetColour(SDL_Surface* surface);
 
 
 int main(){
@@ -69,6 +71,9 @@ int main(){
     SetColor(renderer, GRAY);
     SDL_RenderClear(renderer);
 
+    //Make a surface to be read from
+    surface = SDL_CreateRGBSurfaceWithFormat(0, SCREENHEIGHT, SCREENWIDTH, 32, SDL_PIXELFORMAT_RGBA32);
+
 
 
     //these objects should not be fuly updateed per frame.
@@ -81,6 +86,9 @@ int main(){
         int oldsw = SCREENWIDTH;
         int oldsh = SCREENHEIGHT;
         SDL_GetWindowSize(window,&SCREENWIDTH,&SCREENHEIGHT);
+
+        //uodate the surface
+        SDL_RenderReadPixels(renderer,NULL,SDL_PIXELFORMAT_RGBA32,surface->pixels,surface->pitch);
 
         //define object positions per frame for window resizing
 
@@ -97,6 +105,9 @@ int main(){
         SDL_Rect drawBrushMinus = {110,SCREENHEIGHT-40,30,30};
         int brushMinusLabel[2] = {118,SCREENHEIGHT-38};
         int sizeLabel[2] = {150,SCREENHEIGHT-38};
+        
+        SDL_Rect fillButton = {220,SCREENHEIGHT-40,80,30};
+        int fillButtonLabel[2] = {228,SCREENHEIGHT-38};
 
         //objects for menuBar
         SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
@@ -181,8 +192,8 @@ int main(){
         SDL_Rect baseLayerDest = {(SCREENWIDTH/2)-(canvasW/2),((SCREENHEIGHT-100)/2)-(canvasH/2),canvasW,canvasH};
         SDL_RenderCopy(renderer,baseLayer,NULL,&baseLayerDest);
         //mouse coords local to the canvas
-        int local_x = mouse_x - baseLayerDest.x;
-        int local_y = mouse_y - baseLayerDest.y;
+        local_x = mouse_x - baseLayerDest.x;
+        local_y = mouse_y - baseLayerDest.y;
 
         //
         //Menu bar
@@ -225,6 +236,12 @@ int main(){
         SDL_RenderFillRect(renderer,&freeDrawButton);
         MakeText(renderer,font,"Draw",freeDrawLabel);
 
+        //Fill button
+        SetColor(renderer,GRAY);
+        if (mode == 3){SetColor(renderer,MIDGRAY);}
+        SDL_RenderFillRect(renderer,&fillButton);
+        MakeText(renderer,font,"Fill",fillButtonLabel);
+
         //draw bush buttons
         SetColor(renderer,GRAY);
         SDL_RenderFillRect(renderer,&drawBrushPlus);
@@ -237,6 +254,8 @@ int main(){
         //Colour preview
         SetColor(renderer,drawColour);
         SDL_RenderFillRect(renderer,&previewColour);
+        SetColor(renderer,BLACK);
+        if(mode == 4){SDL_RenderDrawRect(renderer,&previewColour);}
 
         for (int r = 0; r < 256; r+=8){
             SDL_Color tmpC = {r,0,0,255};
@@ -323,18 +342,24 @@ int main(){
         int redInput_btn = Button(redInput);
         if (redInput_btn){
             drawColour.r = mouse_x - redInput.x;
+            drawColour.g = greenSlider.x -greenInput.x;
+            drawColour.b = blueSlider.x - blueInput.x;
             redSlider.x = mouse_x;
         }
 
         int greenInput_btn = Button(greenInput);
         if (greenInput_btn){
             drawColour.g = mouse_x - greenInput.x;
+            drawColour.b = blueSlider.x - blueInput.x;
+            drawColour.r = redSlider.x - redInput.x;
             greenSlider.x = mouse_x;
         }
 
         int blueInput_btn = Button(blueInput);
         if (blueInput_btn){
             drawColour.b = mouse_x - blueInput.x;
+            drawColour.g = greenSlider.x -greenInput.x;
+            drawColour.r = redSlider.x - redInput.x;
             blueSlider.x = mouse_x;
         }
 
@@ -349,6 +374,12 @@ int main(){
 
         int brushMinus_btn = Button(drawBrushMinus);
         if (brushMinus_btn){if(brushSize > 0){brushSize-=pixelSize;}}
+
+        int fillButton_btn = Button(fillButton);
+        if (fillButton_btn){mode = 3;}
+
+        int previewColour_btn = Button(previewColour);
+        if (previewColour_btn){mode = 4;}
 
 
         //button presses for menu bar
@@ -416,8 +447,12 @@ int main(){
                 SDL_SetRenderTarget(renderer,NULL);
             }
         }
+        if (mode == 4){
+            SDL_Color output = GetColour(surface);
+            output.a = 255;
+            drawColour = output;
+        }
         
-
         
         //updates the display
         SDL_RenderPresent(renderer);
@@ -492,4 +527,15 @@ SDL_Texture* MakeCanvas(SDL_Renderer* renderer){
     SDL_RenderClear(renderer);
     SDL_SetRenderTarget(renderer,NULL);
     return baseLayer;
+}
+
+SDL_Color GetColour(SDL_Surface* surface){
+    Uint32 pixel;
+    SDL_Color c;
+    Uint32* pixels = (Uint32*)surface->pixels;
+    pixel = pixels[mouse_y * surface->w + mouse_x];
+
+    SDL_GetRGB(pixel, surface->format, &c.r,&c.g,&c.b);
+
+    return c;
 }
