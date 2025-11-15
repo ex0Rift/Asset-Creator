@@ -37,7 +37,7 @@ void MakeText(SDL_Renderer* r, TTF_Font* font, char text[],int dim[2]);
 int Button(SDL_Rect r);
 void DrawColourPallet(SDL_Renderer* r);
 SDL_Texture* MakeCanvas(SDL_Renderer* renderer);
-SDL_Color GetColour(SDL_Surface* surface);
+SDL_Color GetColour(SDL_Surface* surface,int x,int y);
 
 
 int main(){
@@ -447,8 +447,44 @@ int main(){
                 SDL_SetRenderTarget(renderer,NULL);
             }
         }
+
+        if (mode == 3){
+            if (click == 1){
+                //turn mouse coords into pixel sizes
+                int pixel_x = (mouse_x/pixelSize)*pixelSize;
+                int pixel_y = (mouse_y/pixelSize)*pixelSize;
+                int local_pixel_x = (local_x/pixelSize)*pixelSize;
+                int local_pixel_y = (local_y/pixelSize)*pixelSize;
+
+                //LINEBANK
+                //currentColour = GetColour(surface,pixel_x,pixel_y); grabbing current colour
+                //SDL_SetRenderTarget(renderer,baseLayer);//sets Target to canvas
+
+
+                SDL_Color startColour = GetColour(surface, pixel_x,pixel_y);
+                SetColor(renderer,drawColour);
+                SDL_Color currentColour = startColour;
+                int i = 0;
+                int running = 1;
+                while (running){
+                    currentColour = GetColour(surface,pixel_x,pixel_y+1); 
+                    if (startColour.r == currentColour.r && startColour.g == currentColour.g && startColour.b == currentColour.b){
+                        SDL_SetRenderTarget(renderer,baseLayer);//sets Target to canvas
+
+
+                        SDL_Rect tmp = {local_pixel_x,local_pixel_y+i,pixelSize,pixelSize};
+                        SDL_RenderFillRect(renderer,&tmp);
+
+
+                        SDL_SetRenderTarget(renderer,NULL);//resets Target
+                        i+=pixelSize;
+                    }else {running = 0;}
+                }
+            }
+        }
+
         if (mode == 4){
-            SDL_Color output = GetColour(surface);
+            SDL_Color output = GetColour(surface,local_x,local_y);
             output.a = 255;
             drawColour = output;
         }
@@ -529,11 +565,11 @@ SDL_Texture* MakeCanvas(SDL_Renderer* renderer){
     return baseLayer;
 }
 
-SDL_Color GetColour(SDL_Surface* surface){
+SDL_Color GetColour(SDL_Surface* surface,int x, int y){
     Uint32 pixel;
     SDL_Color c;
     Uint32* pixels = (Uint32*)surface->pixels;
-    pixel = pixels[mouse_y * surface->w + mouse_x];
+    pixel = pixels[y * surface->w + x];
 
     SDL_GetRGB(pixel, surface->format, &c.r,&c.g,&c.b);
 
