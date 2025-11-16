@@ -17,6 +17,7 @@ int oldCanvasH , oldCanvasW;
 int newCanvasMode = 0;
 
 SDL_Surface* surface;
+int selection = 0;
 int mouse_x , mouse_y , local_x , local_y;
 int first_x , first_y , first_x_global , first_y_global;
 int click;
@@ -109,6 +110,8 @@ int main(){
         SDL_Rect fillButton = {220,SCREENHEIGHT-40,80,30};
         int fillButtonLabel[2] = {228,SCREENHEIGHT-38};
 
+        SDL_Rect selectButton = {110,SCREENHEIGHT-80,100,30};
+        int selectButtonLabel[2] = {118,SCREENHEIGHT-78};
         //objects for menuBar
         SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
         SDL_Rect saveButton = {0,0,100,30};
@@ -122,7 +125,6 @@ int main(){
         //inputs definitions
 
         SDL_Rect previewColour = {SCREENWIDTH-380,SCREENHEIGHT-90,50,80};
-
         SDL_Rect redInput = {SCREENWIDTH-300,SCREENHEIGHT-90,256,20};
         SDL_Rect greenInput = {SCREENWIDTH-300,SCREENHEIGHT-60,256,20};
         SDL_Rect blueInput = {SCREENWIDTH-300,SCREENHEIGHT-30,256,20};
@@ -235,6 +237,12 @@ int main(){
         if (mode == 2){SetColor(renderer,MIDGRAY);}
         SDL_RenderFillRect(renderer,&freeDrawButton);
         MakeText(renderer,font,"Draw",freeDrawLabel);
+
+        //Fill button
+        SetColor(renderer,GRAY);
+        if (mode == 5){SetColor(renderer,MIDGRAY);}
+        SDL_RenderFillRect(renderer,&selectButton);
+        MakeText(renderer,font,"Select",selectButtonLabel);
 
         //Fill button
         //SetColor(renderer,GRAY);
@@ -378,6 +386,9 @@ int main(){
         //int fillButton_btn = Button(fillButton);
         //if (fillButton_btn){mode = 3;}
 
+        int selectButton_btn = Button(selectButton);
+        if (selectButton_btn){mode = 5;}
+
         int previewColour_btn = Button(previewColour);
         if (previewColour_btn){mode = 4;}
 
@@ -487,6 +498,43 @@ int main(){
             SDL_Color output = GetColour(surface,local_x,local_y);
             output.a = 255;
             drawColour = output;
+        }
+
+        if (mode == 5){
+            if (click == 1) {
+                first_x = (local_x/pixelSize)*pixelSize;
+                first_y = (local_y/pixelSize)*pixelSize;
+                first_x_global = (mouse_x/pixelSize)*pixelSize;
+                first_y_global = (mouse_y/pixelSize)*pixelSize;
+            }
+            if (holding == 1){
+                SetColor(renderer,BLACK);
+                int new_x = (mouse_x/pixelSize)*pixelSize;
+                int new_y = (mouse_y/pixelSize)*pixelSize;
+                SDL_Rect drawingRect = {first_x_global,first_y_global,new_x-first_x_global,new_y-first_y_global};
+                SDL_RenderDrawRect(renderer,&drawingRect);
+            }
+            if (holding == 2){
+                int new_x = (local_x/pixelSize)*pixelSize;
+                int new_y = (local_y/pixelSize)*pixelSize;
+                SDL_Color savelist[new_y-first_y][new_x-first_x];
+
+                int height = new_y-first_y;
+                int width = new_x-first_x;
+
+                for (int i = 0; i < height; i++){
+                    for (int j = 0; j < width; j++){
+                        SDL_Color tmpc = GetColour(surface,first_x+i,first_y+j);
+                        savelist[i][i] = (SDL_Color){tmpc.r,tmpc.g,tmpc.b,255};
+                    }
+                }
+                
+                holding = 0;
+                selection = 1;
+            }
+            if (selection == 1){
+                
+            }
         }
         
         
