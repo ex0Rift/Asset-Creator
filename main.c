@@ -237,10 +237,10 @@ int main(){
         MakeText(renderer,font,"Draw",freeDrawLabel);
 
         //Fill button
-        SetColor(renderer,GRAY);
-        if (mode == 3){SetColor(renderer,MIDGRAY);}
-        SDL_RenderFillRect(renderer,&fillButton);
-        MakeText(renderer,font,"Fill",fillButtonLabel);
+        //SetColor(renderer,GRAY);
+        //if (mode == 3){SetColor(renderer,MIDGRAY);}
+        //SDL_RenderFillRect(renderer,&fillButton);
+        //MakeText(renderer,font,"Fill",fillButtonLabel);
 
         //draw bush buttons
         SetColor(renderer,GRAY);
@@ -375,8 +375,8 @@ int main(){
         int brushMinus_btn = Button(drawBrushMinus);
         if (brushMinus_btn){if(brushSize > 0){brushSize-=pixelSize;}}
 
-        int fillButton_btn = Button(fillButton);
-        if (fillButton_btn){mode = 3;}
+        //int fillButton_btn = Button(fillButton);
+        //if (fillButton_btn){mode = 3;}
 
         int previewColour_btn = Button(previewColour);
         if (previewColour_btn){mode = 4;}
@@ -467,7 +467,7 @@ int main(){
                 int i = 0;
                 int running = 1;
                 while (running){
-                    currentColour = GetColour(surface,pixel_x,pixel_y+1); 
+                    currentColour = GetColour(surface,pixel_x,pixel_y+i); 
                     if (startColour.r == currentColour.r && startColour.g == currentColour.g && startColour.b == currentColour.b){
                         SDL_SetRenderTarget(renderer,baseLayer);//sets Target to canvas
 
