@@ -4,6 +4,7 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_image.h>
 #include "utils.h"
+#include "tinyfiledialogs.h"
 
 //defining variables here
 int SCREENHEIGHT = 600;
@@ -104,17 +105,22 @@ int main(){
 
         int freeDrawLabel[2] = {30,SCREENHEIGHT-36};
         SDL_Rect freeDrawButton = {20,SCREENHEIGHT-40,80,30};
-        SDL_Rect drawBrushPlus = {180,SCREENHEIGHT-40,30,30};
-        int brushPlusLabel[2] = {188,SCREENHEIGHT-38};
-        SDL_Rect drawBrushMinus = {110,SCREENHEIGHT-40,30,30};
-        int brushMinusLabel[2] = {118,SCREENHEIGHT-38};
-        int sizeLabel[2] = {150,SCREENHEIGHT-38};
+
+        SDL_Rect drawBrushPlus = {290,SCREENHEIGHT-40,30,30};
+        int brushPlusLabel[2] = {298,SCREENHEIGHT-38};
+        SDL_Rect drawBrushMinus = {220,SCREENHEIGHT-40,30,30};
+        int brushMinusLabel[2] = {228,SCREENHEIGHT-38};
+        int sizeLabel[2] = {260,SCREENHEIGHT-38};
         
         SDL_Rect fillButton = {220,SCREENHEIGHT-40,80,30};
         int fillButtonLabel[2] = {228,SCREENHEIGHT-38};
 
         SDL_Rect selectButton = {110,SCREENHEIGHT-80,100,30};
         int selectButtonLabel[2] = {118,SCREENHEIGHT-78};
+
+        SDL_Rect eraseButton = {110,SCREENHEIGHT-40,100,30};
+        int eraseButtonLabel[2] = {118,SCREENHEIGHT-38};
+
         //objects for menuBar
         SDL_Rect menuBar = {0,0,SCREENWIDTH,30};
         SDL_Rect saveButton = {0,0,100,30};
@@ -240,6 +246,12 @@ int main(){
         if (mode == 2){SetColor(renderer,MIDGRAY);}
         SDL_RenderFillRect(renderer,&freeDrawButton);
         MakeText(renderer,font,"Draw",freeDrawLabel);
+
+        //erase button
+        SetColor(renderer,GRAY);
+        if (mode == 6){SetColor(renderer,MIDGRAY);}
+        SDL_RenderFillRect(renderer,&eraseButton);
+        MakeText(renderer,font,"Erase",eraseButtonLabel);
 
         //Fill button
         SetColor(renderer,GRAY);
@@ -395,6 +407,9 @@ int main(){
         int previewColour_btn = Button(previewColour);
         if (previewColour_btn){mode = 4;}
 
+        int eraseButton_btn = Button(eraseButton);
+        if (eraseButton_btn){mode = 6;}
+
 
         //button presses for menu bar
 
@@ -406,7 +421,16 @@ int main(){
             SDL_Rect area = {baseLayerDest.x,baseLayerDest.y,baseLayerDest.w,baseLayerDest.h};
             SDL_RenderReadPixels(renderer,&area,SDL_PIXELFORMAT_RGBA32,saveSurface->pixels, saveSurface->pitch);
 
-            IMG_SavePNG(saveSurface,"output.png");
+            //Opens up tinyfiledialogs
+            const char* filters[] = {".png"};
+            const char* path = tinyfd_saveFileDialog("Save Image", "drawing.png", 1, filters, "Choose image file");
+
+            if (path){
+                if (IMG_SavePNG(saveSurface, path) != 0){
+                    printf("Failed\n");
+                }
+            }
+
             SDL_FreeSurface(saveSurface);
         }
 
@@ -587,6 +611,16 @@ int main(){
                     selection = 0;
                     holding = 0;
                 }
+            }
+        }
+
+        if (mode == 6){
+            if (holding == 1){
+                SDL_SetRenderTarget(renderer,baseLayer);
+                SetColor(renderer,WHITE);
+                SDL_Rect tmp = {local_x,local_y,brushSize,brushSize};
+                SDL_RenderFillRect(renderer,&tmp);
+                SDL_SetRenderTarget(renderer,NULL);
             }
         }
         
