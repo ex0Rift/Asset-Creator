@@ -52,6 +52,21 @@ The file saving dialogue uses [tinyfiledialogs v3.21.2 ](https://sourceforge.net
 >press - to decrease brush size
 
 
+### Resizing canvas
+
+>CLick "NEW" on the top bar
+>
+>two options are available
+>
+>top is the width
+>
+>bottom is height
+>
+>adjust them with the + and - buttons
+>
+>press create
+
+
 ## Images of the application
 
 <img width="798" height="596" alt="image" src="https://github.com/user-attachments/assets/5214e9dd-5b1a-4f1c-82d9-a9bfebbd407c" />
