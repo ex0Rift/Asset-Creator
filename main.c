@@ -15,9 +15,11 @@ int canvasW = 400;
 int oldCanvasH , oldCanvasW;
 
 int newCanvasMode = 0;
-
+SDL_Rect drawingRect;
+int height_save , width_save;
 SDL_Surface* surface;
 int selection = 0;
+int save_x, save_y;
 int mouse_x , mouse_y , local_x , local_y;
 int first_x , first_y , first_x_global , first_y_global;
 int click;
@@ -29,6 +31,7 @@ int currentNotificationTime = 0;
 char notificationText[] = "Notification";
 char str[10];
 SDL_Color drawColour = {0,0,0,255};
+SDL_Color **savelist = NULL;
 
 Uint32 frameStart;
 int frameTime;
@@ -501,39 +504,82 @@ int main(){
         }
 
         if (mode == 5){
-            if (click == 1) {
-                first_x = (local_x/pixelSize)*pixelSize;
-                first_y = (local_y/pixelSize)*pixelSize;
-                first_x_global = (mouse_x/pixelSize)*pixelSize;
-                first_y_global = (mouse_y/pixelSize)*pixelSize;
-            }
-            if (holding == 1){
-                SetColor(renderer,BLACK);
-                int new_x = (mouse_x/pixelSize)*pixelSize;
-                int new_y = (mouse_y/pixelSize)*pixelSize;
-                SDL_Rect drawingRect = {first_x_global,first_y_global,new_x-first_x_global,new_y-first_y_global};
-                SDL_RenderDrawRect(renderer,&drawingRect);
-            }
-            if (holding == 2){
-                int new_x = (local_x/pixelSize)*pixelSize;
-                int new_y = (local_y/pixelSize)*pixelSize;
-                SDL_Color savelist[new_y-first_y][new_x-first_x];
-
-                int height = new_y-first_y;
-                int width = new_x-first_x;
-
-                for (int i = 0; i < height; i++){
-                    for (int j = 0; j < width; j++){
-                        SDL_Color tmpc = GetColour(surface,first_x+i,first_y+j);
-                        savelist[i][i] = (SDL_Color){tmpc.r,tmpc.g,tmpc.b,255};
-                    }
+            int new_x , new_y;
+            int save_x , save_y;
+            if (selection == 0){
+                if (click == 1) {
+                    first_x = (local_x/pixelSize)*pixelSize;
+                    first_y = (local_y/pixelSize)*pixelSize;
+                    first_x_global = (mouse_x/pixelSize)*pixelSize;
+                    first_y_global = (mouse_y/pixelSize)*pixelSize;
                 }
-                
-                holding = 0;
-                selection = 1;
+                if (holding == 1){
+                    SetColor(renderer,BLACK);
+                    int new_x = (mouse_x/pixelSize)*pixelSize;
+                    int new_y = (mouse_y/pixelSize)*pixelSize;
+                    save_x = new_x;
+                    save_y = new_y;
+                    drawingRect = (SDL_Rect){first_x_global,first_y_global,save_x-first_x_global,save_y-first_y_global};
+                    SDL_RenderDrawRect(renderer,&drawingRect);
+                }
+                if (holding == 2){
+                    int new_x = (local_x/pixelSize)*pixelSize;
+                    int new_y = (local_y/pixelSize)*pixelSize;
+                    //SDL_Color savelist[new_y-first_y][new_x-first_x];
+                    height_save = new_y-first_y;
+                    width_save = new_x-first_x;
+
+                    savelist = malloc(height_save * sizeof(SDL_Color*));
+                    for (int i = 0; i < height_save; i++){
+                        savelist[i] = malloc(width_save * sizeof(SDL_Color));
+                    }
+
+                    for (int i = 0; i < height_save; i++){
+                        for (int j = 0; j < width_save; j++){
+                            SDL_Color tmpc = GetColour(surface,first_x+i,first_y+j);
+                            //printf("%d %d %d\n",tmpc.r,tmpc.g,tmpc.b);
+                            savelist[i][j] = (SDL_Color){tmpc.r,tmpc.g,tmpc.b,255};
+                        }
+                    }
+                    
+                    holding = 0;
+                    selection = 1;
+                }
             }
             if (selection == 1){
-                
+                SetColor(renderer,BLACK);
+                SDL_RenderDrawRect(renderer,&drawingRect);
+                if (click == 1){
+                    first_x = (local_x/pixelSize)*pixelSize;
+                    first_y = (local_y/pixelSize)*pixelSize;
+                    first_x_global = (mouse_x/pixelSize)*pixelSize;
+                    first_y_global = (mouse_y/pixelSize)*pixelSize;
+                }
+                if (holding == 1){
+                    int new_x = (mouse_x/pixelSize)*pixelSize;
+                    int new_y = (mouse_y/pixelSize)*pixelSize;
+                    save_x = (local_x/pixelSize)*pixelSize;
+                    save_y = (local_y/pixelSize)*pixelSize;
+                    drawingRect.x = new_x;
+                    drawingRect.y = new_y;
+                }
+
+                if (holding == 2){
+                    printf("Happening %d %d\n",height_save,width_save);
+                    SDL_SetRenderTarget(renderer,baseLayer);
+                    for (int i = 0; i < height_save; i++){
+                        for (int j = 0; j < width_save; j++){
+                            printf("itterating\n");
+                            printf("nums %d %d %d\n",savelist[i][j].r,savelist[i][j].g,savelist[i][j].b);
+                            SetColor(renderer,savelist[i][j]);
+                            SDL_Rect tmpr = {save_x+j,save_y+i,pixelSize,pixelSize};
+                            SDL_RenderFillRect(renderer,&tmpr);
+                        }
+                    }
+                    SDL_SetRenderTarget(renderer,NULL);
+                    selection = 0;
+                    holding = 0;
+                }
             }
         }
         
@@ -549,6 +595,7 @@ int main(){
 
 
     // when ending program
+    free(savelist);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_CloseFont(font);
