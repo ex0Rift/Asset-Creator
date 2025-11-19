@@ -7,6 +7,8 @@ if you would like to compile the source code yourself use the build.sh file.
 
 The file saving dialogue uses [tinyfiledialogs v3.21.2 ](https://sourceforge.net/projects/tinyfiledialogs/ "@tineFileDialouge") all credit to them for the saving intergration.
 
+Release is available... you can get it on the [release tab](https://github.com/ex0Rift/Asset-Creator/releases/tag/Release "@github release")
+
 ## How to use
 
 ### Changing colour
